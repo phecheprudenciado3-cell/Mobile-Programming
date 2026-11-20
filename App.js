@@ -3,100 +3,180 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
-  ActivityIndicator
+  ActivityIndicator,
+  TouchableOpacity
 } from 'react-native';
 
 export default function App() {
 
-  
-  const [posts, setPosts] = useState([]);
-
-  
+  const [fact, setFact] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  
-  useEffect(() => {
+  const fetchFact = async () => {
+    try {
+      setLoading(true);
+      setError('');
 
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch(
-          'https://jsonplaceholder.typicode.com/posts'
-        );
+      const response = await fetch(
+        'https://uselessfacts.jsph.pl/api/v2/facts/random?language=en'
+      );
 
-        const data = await response.json();
-
-        setPosts(data.slice(0, 10));
-
-      } catch (error) {
-        console.log('Error fetching data:', error);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch fact');
       }
-    };
 
-    fetchPosts();
+      const data = await response.json();
 
+      setFact(data.text);
+
+    } catch (error) {
+      console.log('Error fetching fact:', error);
+      setError('Unable to load a fun fact. Please try again.');
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFact();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>External API Posts</Text>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="blue" />
-      ) : (
-        <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.postContainer}>
-              <Text style={styles.title}>
-                {item.id}. {item.title}
-              </Text>
+      <Text style={styles.header}>DAILY CURIOSITY</Text>
 
-              <Text style={styles.body}>
-                {item.body}
-              </Text>
-            </View>
-          )}
-        />
-      )}
+      <Text style={styles.subtitle}>
+        Discover something interesting today!
+      </Text>
+
+      <View style={styles.card}>
+
+        <Text style={styles.cardLabel}>
+          DID YOU KNOW?
+        </Text>
+
+        {loading ? (
+          <ActivityIndicator size="large" color="#6C63FF" />
+        ) : error ? (
+          <Text style={styles.error}>{error}</Text>
+        ) : (
+          <Text style={styles.fact}>
+            {fact}
+          </Text>
+        )}
+
+        <Text style={styles.footer}>
+          A little knowledge goes a long way.
+        </Text>
+
+      </View>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={fetchFact}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? 'Loading...' : 'Discover Another Fact'}
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={styles.note}>
+        Powered by Useless Facts API
+      </Text>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
-    padding: 20,
-    paddingTop: 50,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: '#F3F2FF',
+    justifyContent: 'center',
+    padding: 25
   },
 
-  heading: {
-    fontSize: 24,
+  header: {
+    fontSize: 27,
     fontWeight: 'bold',
-    marginBottom: 20
+    color: '#383078',
+    textAlign: 'center',
+    letterSpacing: 2
   },
 
-  postContainer: {
-    backgroundColor: 'white',
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 8
+  subtitle: {
+    fontSize: 14,
+    color: '#777',
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 35
   },
 
-  title: {
+  card: {
+    backgroundColor: '#FFFFFF',
+    padding: 25,
+    borderRadius: 20,
+    minHeight: 230,
+    justifyContent: 'center',
+    elevation: 5
+  },
+
+  cardLabel: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#6C63FF',
+    marginBottom: 20,
+    textAlign: 'center',
+    letterSpacing: 2
+  },
+
+  fact: {
+    fontSize: 19,
+    color: '#333',
+    textAlign: 'center',
+    lineHeight: 30,
+    fontWeight: '500'
+  },
+
+  error: {
+    fontSize: 15,
+    color: 'red',
+    textAlign: 'center'
+  },
+
+  footer: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 25
+  },
+
+  button: {
+    backgroundColor: '#6C63FF',
+    padding: 17,
+    borderRadius: 12,
+    marginTop: 25
+  },
+
+  buttonText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 5
+    textAlign: 'center'
   },
 
-  body: {
-    fontSize: 14,
-    color: '#555'
+  note: {
+    color: '#999',
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 25
   }
+
 });
 
